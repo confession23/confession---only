@@ -73,20 +73,12 @@ body.light .message-card {
   background: #eee;
   color: #111;
 }
-a {
-  color: #ff4d6d;
-  text-decoration: none;
-}
-.status {
-  font-weight: bold;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-size: 12px;
-}
-.status.pending { background: #ffa500; color: #111; }
-.status.approved { background: #28a745; color: #fff; }
-.status.rejected { background: #dc3545; color: #fff; }
-.status.edited { background: #17a2b8; color: #fff; }
+a { color:#ff4d6d; text-decoration:none; }
+.status { font-weight:bold; padding:2px 6px; border-radius:6px; font-size:12px; }
+.status.pending { background:#ffa500; color:#111; }
+.status.approved { background:#28a745; color:#fff; }
+.status.rejected { background:#dc3545; color:#fff; }
+.status.edited { background:#17a2b8; color:#fff; }
 </style>
 </head>
 <body>
@@ -103,14 +95,13 @@ a {
 
 <!-- Admin Dashboard -->
 <h2>Messages (Admin View) 🤍 <span id="count"></span></h2>
-<div id="list" style="width: 400px;"></div>
+<div id="list" style="width:400px;"></div>
 
-<!-- Firebase SDK (v10 for non-module JS) -->
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-
 <script>
-  // 🔹 Firebase config (replace with your own)
+  // 🔹 Replace with your Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyDtbHkEBA9aUQISb-u84BUJnJZACr9Thk8",
     authDomain: "confess-4ce02.firebaseapp.com",
@@ -124,14 +115,14 @@ a {
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  // 🔹 Generate UID for user
+  // Generate UID
   let userId = localStorage.getItem("uid");
   if(!userId){
     userId = "user_" + Math.random().toString(36).substr(2,9);
     localStorage.setItem("uid", userId);
   }
 
-  // 🔹 Send confession
+  // Send confession
   function send(){
     let text = document.getElementById("msg").value.trim();
     let insta = document.getElementById("insta").value.trim();
@@ -149,64 +140,59 @@ a {
       document.getElementById("msg").value = "";
       document.getElementById("insta").value = "";
       alert("Confession sent! 💌");
-    }).catch(err=>{
-      alert("Error sending confession: "+err);
     });
   }
 
-  // 🔹 Copy message for story
+  // Copy for story
   function copyForStory(msg){
     navigator.clipboard.writeText(msg).then(()=>{
-      alert("Message copied! You can now paste it in your story 🎉");
+      alert("Message copied! Paste it in your story 🎉");
     });
   }
 
-  // 🔹 Update status
+  // Update status
   function updateStatus(id, status){
     db.collection("confessions").doc(id).update({status: status});
   }
 
-  // 🔹 Display messages (Admin View)
+  // Display messages (Admin View)
   function displayMessages(){
-    db.collection("confessions")
-      .orderBy("time","desc")
-      .onSnapshot(snapshot => {
-        let list = document.getElementById("list");
-        list.innerHTML = "";
-        snapshot.forEach(doc => {
-          let data = doc.data();
-          let div = document.createElement("div");
-          div.className = "message-card";
+    db.collection("confessions").orderBy("time","desc").onSnapshot(snapshot=>{
+      let list = document.getElementById("list");
+      list.innerHTML = "";
+      snapshot.forEach(doc=>{
+        let data = doc.data();
+        let div = document.createElement("div");
+        div.className = "message-card";
 
-          let instaLink = data.insta ? `<a href="https://instagram.com/${encodeURIComponent(data.insta)}" target="_blank">${data.insta}</a>` : "Anonymous";
-          let statusBadge = `<span class="status ${data.status}">${data.status}</span>`;
-          let timeString = data.time ? data.time.toDate().toLocaleString() : "Unknown time";
+        let instaLink = data.insta ? `<a href="https://instagram.com/${encodeURIComponent(data.insta)}" target="_blank">${data.insta}</a>` : "Anonymous";
+        let statusBadge = `<span class="status ${data.status}">${data.status}</span>`;
+        let timeString = data.time ? data.time.toDate().toLocaleString() : "Unknown time";
 
-          div.innerHTML = `
-            <p>${data.message}</p>
-            <small>👤 UID: ${data.uid}</small><br>
-            <small>📸 ${instaLink}</small> | ${statusBadge}<br>
-            <small>🕒 ${timeString}</small><br>
-            <button onclick="updateStatus('${doc.id}','approved')">✅ Approve</button>
-            <button onclick="updateStatus('${doc.id}','rejected')">❌ Reject</button>
-            <button onclick="updateStatus('${doc.id}','edited')">✏️ Edit</button>
-            <button onclick="copyForStory('${data.message.replace(/'/g,"\\'")}')">📋 Copy for Story</button>
-          `;
-          list.appendChild(div);
-        });
-        document.getElementById("count").innerText = snapshot.size;
+        div.innerHTML = `
+          <p>${data.message}</p>
+          <small>👤 UID: ${data.uid}</small><br>
+          <small>📸 ${instaLink}</small> | ${statusBadge}<br>
+          <small>🕒 ${timeString}</small><br>
+          <button onclick="updateStatus('${doc.id}','approved')">✅ Approve</button>
+          <button onclick="updateStatus('${doc.id}','rejected')">❌ Reject</button>
+          <button onclick="updateStatus('${doc.id}','edited')">✏️ Edit</button>
+          <button onclick="copyForStory('${data.message.replace(/'/g,"\\'")}')">📋 Copy for Story</button>
+        `;
+        list.appendChild(div);
       });
+      document.getElementById("count").innerText = snapshot.size;
+    });
   }
 
-  // 🔹 Light/Dark toggle
+  // Light/Dark toggle
   function toggleMode(){
     document.body.classList.toggle("light");
     localStorage.setItem("mode", document.body.classList.contains("light") ? "light" : "dark");
   }
-
   if(localStorage.getItem("mode") === "light") document.body.classList.add("light");
 
-  // Display messages on load
+  // Initial load
   displayMessages();
 </script>
 </body>
