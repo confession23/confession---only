@@ -15,17 +15,74 @@ body {
   color: white;
   transition: background 0.3s, color 0.3s;
 }
-body.light { background: radial-gradient(circle at top, #eee, #ccc); color: #111; }
-.card { backdrop-filter: blur(20px); background: rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; width: 400px; margin: 10px 0; transition: background 0.3s; }
-body.light .card { background: rgba(255,255,255,0.3); }
-textarea, input { width: 100%; padding: 10px; border-radius: 10px; border: none; margin-top: 10px; background: rgba(255,255,255,0.08); color: white; font-size: 14px; transition: background 0.3s, color 0.3s; }
-body.light textarea, body.light input { background: rgba(255,255,255,0.5); color: #111; }
-button { width: 100%; padding: 12px; border-radius: 12px; border: none; background: linear-gradient(135deg, #ff0080, #7928ca); color: white; font-weight: bold; margin-top: 10px; cursor: pointer; transition: 0.3s; }
-button:hover { transform: scale(1.05); box-shadow: 0 0 20px #ff0080; }
-.message-card { background: #111; padding: 12px; border-radius: 12px; margin: 8px 0; transition: background 0.3s, color 0.3s; }
-body.light .message-card { background: #eee; color: #111; }
-a { color: #ff4d6d; text-decoration: none; }
-.status { font-weight: bold; padding: 2px 6px; border-radius: 6px; font-size: 12px; }
+body.light {
+  background: radial-gradient(circle at top, #eee, #ccc);
+  color: #111;
+}
+.card {
+  backdrop-filter: blur(20px);
+  background: rgba(255,255,255,0.05);
+  border-radius: 20px;
+  padding: 20px;
+  width: 400px;
+  margin: 10px 0;
+  transition: background 0.3s;
+}
+body.light .card {
+  background: rgba(255,255,255,0.3);
+}
+textarea, input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  margin-top: 10px;
+  background: rgba(255,255,255,0.08);
+  color: white;
+  font-size: 14px;
+  transition: background 0.3s, color 0.3s;
+}
+body.light textarea, body.light input {
+  background: rgba(255,255,255,0.5);
+  color: #111;
+}
+button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #ff0080, #7928ca);
+  color: white;
+  font-weight: bold;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px #ff0080;
+}
+.message-card {
+  background: #111;
+  padding: 12px;
+  border-radius: 12px;
+  margin: 8px 0;
+  transition: background 0.3s, color 0.3s;
+}
+body.light .message-card {
+  background: #eee;
+  color: #111;
+}
+a {
+  color: #ff4d6d;
+  text-decoration: none;
+}
+.status {
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 12px;
+}
 .status.pending { background: #ffa500; color: #111; }
 .status.approved { background: #28a745; color: #fff; }
 .status.rejected { background: #dc3545; color: #fff; }
@@ -44,115 +101,113 @@ a { color: #ff4d6d; text-decoration: none; }
   <button onclick="toggleMode()">Toggle Light/Dark 🌗</button>
 </div>
 
-<!-- Messages -->
-<h2 id="messages-title">Messages 🤍 <span id="count"></span></h2>
+<!-- Admin Dashboard -->
+<h2>Messages (Admin View) 🤍 <span id="count"></span></h2>
 <div id="list" style="width: 400px;"></div>
 
-<!-- Firebase CDN -->
+<!-- Firebase SDK (v10 for non-module JS) -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDtbHkEBA9aUQISb-u84BUJnJZACr9Thk8",
-  authDomain: "confess-4ce02.firebaseapp.com",
-  projectId: "confess-4ce02",
-  storageBucket: "confess-4ce02.appspot.com",
-  messagingSenderId: "511380243224",
-  appId: "1:511380243224:web:073e458923ef35e5c0146d"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+  // 🔹 Firebase config (replace with your own)
+  const firebaseConfig = {
+    apiKey: "AIzaSyDtbHkEBA9aUQISb-u84BUJnJZACr9Thk8",
+    authDomain: "confess-4ce02.firebaseapp.com",
+    projectId: "confess-4ce02",
+    storageBucket: "confess-4ce02.appspot.com",
+    messagingSenderId: "511380243224",
+    appId: "1:511380243224:web:073e458923ef35e5c0146d"
+  };
 
-// 🔹 User UID
-let userId = localStorage.getItem("uid");
-if(!userId){
-  userId = "user_" + Math.random().toString(36).substr(2,9);
-  localStorage.setItem("uid", userId);
-}
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-// 🔹 Admin UID (replace with your UID or implement auth)
-const adminUID = "admin123"; // change this to your admin ID
-const isAdmin = (userId === adminUID);
+  // 🔹 Generate UID for user
+  let userId = localStorage.getItem("uid");
+  if(!userId){
+    userId = "user_" + Math.random().toString(36).substr(2,9);
+    localStorage.setItem("uid", userId);
+  }
 
-// 🔹 Send confession
-function send(){
-  let text = document.getElementById("msg").value.trim();
-  let insta = document.getElementById("insta").value.trim();
-  if(text === "") { alert("Cannot send empty confession 😅"); return; }
-  db.collection("confessions").add({
-    message: text,
-    insta: insta,
-    uid: userId,
-    status: "pending",
-    time: new Date()
-  }).then(()=>{
-    document.getElementById("msg").value = "";
-    document.getElementById("insta").value = "";
-    alert("Confession sent! 💌");
-  });
-}
+  // 🔹 Send confession
+  function send(){
+    let text = document.getElementById("msg").value.trim();
+    let insta = document.getElementById("insta").value.trim();
+    if(text === ""){
+      alert("You cannot send an empty confession 😅");
+      return;
+    }
+    db.collection("confessions").add({
+      message: text,
+      insta: insta,
+      uid: userId,
+      status: "pending",
+      time: new Date()
+    }).then(()=>{
+      document.getElementById("msg").value = "";
+      document.getElementById("insta").value = "";
+      alert("Confession sent! 💌");
+    }).catch(err=>{
+      alert("Error sending confession: "+err);
+    });
+  }
 
-// 🔹 Copy message
-function copyForStory(msg){
-  navigator.clipboard.writeText(msg).then(()=>{ alert("Message copied for story 🎉"); });
-}
+  // 🔹 Copy message for story
+  function copyForStory(msg){
+    navigator.clipboard.writeText(msg).then(()=>{
+      alert("Message copied! You can now paste it in your story 🎉");
+    });
+  }
 
-// 🔹 Update status (admin only)
-function updateStatus(id, status){
-  if(!isAdmin) return;
-  db.collection("confessions").doc(id).update({status: status});
-}
+  // 🔹 Update status
+  function updateStatus(id, status){
+    db.collection("confessions").doc(id).update({status: status});
+  }
 
-// 🔹 Display messages
-function displayMessages(){
-  db.collection("confessions")
-    .orderBy("time","desc")
-    .onSnapshot(snapshot => {
-      let list = document.getElementById("list");
-      list.innerHTML = "";
-      snapshot.forEach(doc => {
-        let data = doc.data();
-        if(!isAdmin && data.status !== "approved") return; // non-admin sees only approved
+  // 🔹 Display messages (Admin View)
+  function displayMessages(){
+    db.collection("confessions")
+      .orderBy("time","desc")
+      .onSnapshot(snapshot => {
+        let list = document.getElementById("list");
+        list.innerHTML = "";
+        snapshot.forEach(doc => {
+          let data = doc.data();
+          let div = document.createElement("div");
+          div.className = "message-card";
 
-        let div = document.createElement("div");
-        div.className = "message-card";
-        let instaLink = data.insta ? `<a href="https://instagram.com/${encodeURIComponent(data.insta)}" target="_blank">${data.insta}</a>` : "Anonymous";
-        let statusBadge = `<span class="status ${data.status}">${data.status}</span>`;
-        let timeString = data.time ? data.time.toDate().toLocaleString() : "Unknown time";
+          let instaLink = data.insta ? `<a href="https://instagram.com/${encodeURIComponent(data.insta)}" target="_blank">${data.insta}</a>` : "Anonymous";
+          let statusBadge = `<span class="status ${data.status}">${data.status}</span>`;
+          let timeString = data.time ? data.time.toDate().toLocaleString() : "Unknown time";
 
-        let adminButtons = '';
-        if(isAdmin){
-          adminButtons = `
+          div.innerHTML = `
+            <p>${data.message}</p>
+            <small>👤 UID: ${data.uid}</small><br>
+            <small>📸 ${instaLink}</small> | ${statusBadge}<br>
+            <small>🕒 ${timeString}</small><br>
             <button onclick="updateStatus('${doc.id}','approved')">✅ Approve</button>
             <button onclick="updateStatus('${doc.id}','rejected')">❌ Reject</button>
             <button onclick="updateStatus('${doc.id}','edited')">✏️ Edit</button>
+            <button onclick="copyForStory('${data.message.replace(/'/g,"\\'")}')">📋 Copy for Story</button>
           `;
-        }
-
-        div.innerHTML = `
-          <p>${data.message}</p>
-          <small>👤 UID: ${data.uid}</small><br>
-          <small>📸 ${instaLink}</small> | ${statusBadge}<br>
-          <small>🕒 ${timeString}</small><br>
-          ${adminButtons}
-          <button onclick="copyForStory('${data.message.replace(/'/g,"\\'")}')">📋 Copy for Story</button>
-        `;
-        list.appendChild(div);
+          list.appendChild(div);
+        });
+        document.getElementById("count").innerText = snapshot.size;
       });
-      document.getElementById("count").innerText = snapshot.size;
-      document.getElementById("messages-title").innerText = isAdmin ? "Admin Messages 🤍" : "Messages 🤍";
-    });
-}
+  }
 
-// 🔹 Light/Dark toggle
-function toggleMode(){
-  document.body.classList.toggle("light");
-  localStorage.setItem("mode", document.body.classList.contains("light") ? "light" : "dark");
-}
-if(localStorage.getItem("mode") === "light") document.body.classList.add("light");
+  // 🔹 Light/Dark toggle
+  function toggleMode(){
+    document.body.classList.toggle("light");
+    localStorage.setItem("mode", document.body.classList.contains("light") ? "light" : "dark");
+  }
 
-displayMessages();
+  if(localStorage.getItem("mode") === "light") document.body.classList.add("light");
+
+  // Display messages on load
+  displayMessages();
 </script>
 </body>
 </html>
